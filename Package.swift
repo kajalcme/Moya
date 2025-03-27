@@ -69,7 +69,7 @@ let package = Package(
             dependencies: [ // dev
                 "Moya", // dev
                 "CombineMoya", // dev
-                "ReactiveMoya" // dev
+                "ReactiveMoya", // dev
                 "RxMoya" // dev
                 // .product(name: "Quick", package: "Quick"), // dev
                 // .product(name: "Nimble", package: "Nimble"), // dev
