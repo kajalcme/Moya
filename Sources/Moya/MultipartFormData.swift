@@ -11,32 +11,7 @@ public struct MultipartFormData: Hashable {
         case stream(InputStream, UInt64)
     }
 
-    /// `FileManager` to use for file operations, if needed. `FileManager.default` by default.
-    public let fileManager: FileManager
-
-    /// Separates ``parts`` in the encoded form data. `nil` by default.
-    public let boundary: String?
-
-    /// Blocks of data to send, separated with ``boundary``.
-    public let parts: [MultipartFormBodyPart]
-
-    public init(fileManager: FileManager = .default, boundary: String? = nil, parts: [MultipartFormBodyPart]) {
-        self.fileManager = fileManager
-        self.boundary = boundary
-        self.parts = parts
-    }
-}
-
-extension MultipartFormData: ExpressibleByArrayLiteral {
-    public init(arrayLiteral elements: MultipartFormBodyPart...) {
-        self.init(parts: elements)
-    }
-}
-
-/// Represents the body part of "multipart/form-data" for an upload.
-public struct MultipartFormBodyPart: Hashable {
-
-    public init(provider: MultipartFormData.FormDataProvider, name: String, fileName: String? = nil, mimeType: String? = nil) {
+    public init(provider: FormDataProvider, name: String, fileName: String? = nil, mimeType: String? = nil) {
         self.provider = provider
         self.name = name
         self.fileName = fileName
@@ -44,7 +19,7 @@ public struct MultipartFormBodyPart: Hashable {
     }
 
     /// The method being used for providing form data.
-    public let provider: MultipartFormData.FormDataProvider
+    public let provider: FormDataProvider
 
     /// The name.
     public let name: String
@@ -59,11 +34,11 @@ public struct MultipartFormBodyPart: Hashable {
 
 // MARK: RequestMultipartFormData appending
 internal extension RequestMultipartFormData {
-    func append(data: Data, bodyPart: MultipartFormBodyPart) {
+    func append(data: Data, bodyPart: MultipartFormData) {
         append(data, withName: bodyPart.name, fileName: bodyPart.fileName, mimeType: bodyPart.mimeType)
     }
 
-    func append(fileURL url: URL, bodyPart: MultipartFormBodyPart) {
+    func append(fileURL url: URL, bodyPart: MultipartFormData) {
         if let fileName = bodyPart.fileName, let mimeType = bodyPart.mimeType {
             append(url, withName: bodyPart.name, fileName: fileName, mimeType: mimeType)
         } else {
@@ -71,12 +46,12 @@ internal extension RequestMultipartFormData {
         }
     }
 
-    func append(stream: InputStream, length: UInt64, bodyPart: MultipartFormBodyPart) {
+    func append(stream: InputStream, length: UInt64, bodyPart: MultipartFormData) {
         append(stream, withLength: length, name: bodyPart.name, fileName: bodyPart.fileName ?? "", mimeType: bodyPart.mimeType ?? "")
     }
 
-    func applyMoyaMultipartFormData(_ multipartFormData: Moya.MultipartFormData) {
-        for bodyPart in multipartFormData.parts {
+    func applyMoyaMultipartFormData(_ multipartBody: [Moya.MultipartFormData]) {
+        for bodyPart in multipartBody {
             switch bodyPart.provider {
             case .data(let data):
                 append(data: data, bodyPart: bodyPart)
